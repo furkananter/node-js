@@ -1,11 +1,22 @@
 const express = require('express')
 const morgan = require('morgan')
+const mongoose = require('mongoose')
+const Blog = require('./models/blogs')
 
 const app = express()
+
+// for database url 
+const dbURL = 'mongodb+srv://furkan:asd123@blog-1.vcn30.mongodb.net/blog-1?retryWrites=true&w=majority'
+// for perfect connection to mongoose
+mongoose.connect(dbURL, { useNewUrlParser: true, useUnifiedTopology: true })
+    // if connection is successful then start the app 
+    .then((result) => app.listen(3000))
+    // if connection is not successful then show the error
+    .catch((err) => console.log(err))
+
+
 app.set('view engine','ejs')
 // view engine is set to ejs
-
-app.listen(3000)
 
 
 //! express.static is a middleware, it is used to serve static files
@@ -26,7 +37,16 @@ app.use(express.static('public'))
 app.use(morgan('dev'))
 
 app.get('/', (req,res)=> {
-    res.render('index' , {title: "Anasayfa"})
+    //TODO: Now we don't need to use this code like below.
+    //* [OLD] res.render('index' , {title: "Anasayfa"})
+    //? How we can make these things? 
+    Blog.find().sort({ createdAt: 1})
+        .then((result) => {res.render('index' , {title: "Anasayfa", blogs: result})
+        })
+        .catch((err) => {
+            console.log(err)
+        })
+    
 })
 
 //* before adding ejs into project; we used to use res.sendFile() instead of res.render()
@@ -39,6 +59,41 @@ app.get('/about-us', (req,res)=> {
 app.get('/login', (req,res) => {
     res.render('login', {title: "Login"})
 })
+
+/*
+? These ones just calling a document etc.
+app.get('/add', (req,res) => {
+    const blog = new Blog({
+        title: 'Yeni Yazi',
+        short: 'Kisa Aciklama',
+        long: 'Uzun Aciklama'
+    })
+    blog.save()
+        .then((result) => {
+            res.send(result)
+        })
+        .catch((err) => {
+            console.log(err)
+        })
+})
+
+app.get('/all', (req,res) => {
+    Blog.find()
+        .then((result) => {
+            res.send(result)
+        })
+        .catch((err) => {
+            console.log(err)
+        })
+})
+
+! for reaching single one data.
+app.get('/single', (req,res)=> {
+    Blog.findById('629b99b2feab366ca70ad51d')
+        .then((result) => {res.send(result)})
+        .catch((err) => console.log(err))
+})
+*/
 
 //* creating a middle layer 
 app.use((req,res)=> {
